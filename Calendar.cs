@@ -557,95 +557,92 @@ namespace MauiPersianCalendar
 
         protected void ChangeCalendar(CalandarChanges changes)
         {
-            Device.BeginInvokeOnMainThread(() =>
+            Content = null;
+            if (changes.HasFlag(CalandarChanges.StartDate))
             {
-                Content = null;
-                if (changes.HasFlag(CalandarChanges.StartDate))
+                TitleLabel.Text = PersianDateInfo.MonthDic[StartDate.ToPersianDateTime().Month];
+                //if (TitleLabels != null)
+                //{
+                //    var tls = StartDate.AddMonths(1);
+                //    foreach (var tl in TitleLabels)
+                //    {
+                //        (tl as Label).Text = PersianDateInfo.MonthDic[tls.Month];
+                //        tls = tls.AddMonths(1);
+                //    }
+                //}
+            }
+
+            var pc = new PersianCalendar();
+            var start = CalendarStartDate(StartDate.ToPersianDateTime());
+            var end = pc.GetDaysInMonth(start.Year, start.Month);
+            var startEn = start.ToDateTime();
+            var beginOfMonth = false;
+            var endOfMonth = false;
+            for (int i = 0; i < buttons.Count; i++)
+            {
+                endOfMonth |= i == end;
+                beginOfMonth |= start.Day == 1;
+                var ddd = changes.HasFlag(CalandarChanges.StartDay);
+                //if (i < dayLabels.Count && WeekdaysShow && changes.HasFlag(CalandarChanges.StartDay))
+                if (i < dayLabels.Count && WeekdaysShow)
                 {
-                    TitleLabel.Text = PersianDateInfo.MonthDic[StartDate.ToPersianDateTime().Month];
-                    //if (TitleLabels != null)
-                    //{
-                    //    var tls = StartDate.AddMonths(1);
-                    //    foreach (var tl in TitleLabels)
-                    //    {
-                    //        (tl as Label).Text = PersianDateInfo.MonthDic[tls.Month];
-                    //        tls = tls.AddMonths(1);
-                    //    }
-                    //}
+                    var day = startEn.ToString(WeekdaysFormat);
+                    string showDay = PersianDateInfo.WeekDays[char.ToUpper(day.First()) + day.Substring(1).ToLower()];
+                    dayLabels[i].Text = showDay;
                 }
 
-                var pc = new PersianCalendar();
-                var start = CalendarStartDate(StartDate.ToPersianDateTime());
-                var end = pc.GetDaysInMonth(start.Year, start.Month);
-                var startEn = start.ToDateTime();
-                var beginOfMonth = false;
-                var endOfMonth = false;
-                for (int i = 0; i < buttons.Count; i++)
+                //ChangeWeekNumbers(start, i);
+
+                if (changes.HasFlag(CalandarChanges.All))
                 {
-                    endOfMonth |= i == end;
-                    beginOfMonth |= start.Day == 1;
-                    var ddd = changes.HasFlag(CalandarChanges.StartDay);
-                    //if (i < dayLabels.Count && WeekdaysShow && changes.HasFlag(CalandarChanges.StartDay))
-                    if (i < dayLabels.Count && WeekdaysShow)
-                    {
-                        var day = startEn.ToString(WeekdaysFormat);
-                        string showDay = PersianDateInfo.WeekDays[char.ToUpper(day.First()) + day.Substring(1).ToLower()];
-                        dayLabels[i].Text = showDay;
-                    }
-
-                    //ChangeWeekNumbers(start, i);
-
-                    if (changes.HasFlag(CalandarChanges.All))
-                    {
-                        buttons[i].Text = string.Format("{0}", start.Day);
-                    }
-                    else
-                    {
-                        buttons[i].TextWithoutMeasure = string.Format("{0}", start.Day);
-                    }
-
-                    buttons[i].Date = startEn;
-                    buttons[i].IsOutOfMonth = !(beginOfMonth && !endOfMonth);
-                    buttons[i].IsEnabled = ShowNumOfMonths == 1 || !buttons[i].IsOutOfMonth;
-
-                    SpecialDate sd = null;
-                    //if (SpecialDates != null)
-                    //{
-                    //	sd = SpecialDates.FirstOrDefault(s => s.Date.Date == start.Date);
-                    //}
-
-                    SetButtonNormal(buttons[i]);
-
-                    if ((MinDate.HasValue && startEn.Date < MinDate) || (MaxDate.HasValue && startEn.Date > MaxDate) || (DisableAllDates && sd == null))
-                    {
-                        SetButtonDisabled(buttons[i]);
-                    }
-                    else if (buttons[i].IsEnabled && (SelectedDates?.Select(d => d.Date)?.Contains(startEn.Date) ?? false))
-                    {
-                        SetButtonSelected(buttons[i], sd);
-                    }
-                    else if (sd != null)
-                    {
-                        SetButtonSpecial(buttons[i], sd);
-                    }
-
-                    start.AddDay(1, end);
-                    startEn = start.ToDateTime();
-                    //               if (i != 0 && (i+1) % 42 == 0)
-                    //{
-                    //	beginOfMonth = false;
-                    //	endOfMonth = false;
-                    //	start = CalendarStartDate(start);
-                    //}
-
+                    buttons[i].Text = string.Format("{0}", start.Day);
                 }
-                if (DisableDatesLimitToMaxMinRange)
+                else
                 {
-                    TitleLeftArrow.IsEnabled = !(MinDate.HasValue && CalendarStartDate(StartDate.ToPersianDateTime()).ToDateTime() < MinDate);
-                    TitleRightArrow.IsEnabled = !(MaxDate.HasValue && start.ToDateTime() > MaxDate);
+                    buttons[i].TextWithoutMeasure = string.Format("{0}", start.Day);
                 }
-                Content = MainView;
-            });
+
+                buttons[i].Date = startEn;
+                buttons[i].IsOutOfMonth = !(beginOfMonth && !endOfMonth);
+                buttons[i].IsEnabled = ShowNumOfMonths == 1 || !buttons[i].IsOutOfMonth;
+
+                SpecialDate sd = null;
+                //if (SpecialDates != null)
+                //{
+                //	sd = SpecialDates.FirstOrDefault(s => s.Date.Date == start.Date);
+                //}
+
+                SetButtonNormal(buttons[i]);
+
+                if ((MinDate.HasValue && startEn.Date < MinDate) || (MaxDate.HasValue && startEn.Date > MaxDate) || (DisableAllDates && sd == null))
+                {
+                    SetButtonDisabled(buttons[i]);
+                }
+                else if (buttons[i].IsEnabled && (SelectedDates?.Select(d => d.Date)?.Contains(startEn.Date) ?? false))
+                {
+                    SetButtonSelected(buttons[i], sd);
+                }
+                else if (sd != null)
+                {
+                    SetButtonSpecial(buttons[i], sd);
+                }
+
+                start.AddDay(1, end);
+                startEn = start.ToDateTime();
+                //               if (i != 0 && (i+1) % 42 == 0)
+                //{
+                //	beginOfMonth = false;
+                //	endOfMonth = false;
+                //	start = CalendarStartDate(start);
+                //}
+
+            }
+            if (DisableDatesLimitToMaxMinRange)
+            {
+                TitleLeftArrow.IsEnabled = !(MinDate.HasValue && CalendarStartDate(StartDate.ToPersianDateTime()).ToDateTime() < MinDate);
+                TitleRightArrow.IsEnabled = !(MaxDate.HasValue && start.ToDateTime() > MaxDate);
+            }
+            Content = MainView;
         }
 
         protected void SetButtonNormal(CalendarButton button)
@@ -653,19 +650,16 @@ namespace MauiPersianCalendar
             button.BackgroundPattern = null;
             button.BackgroundImage = null;
 
-            Device.BeginInvokeOnMainThread(() =>
-            {
-                button.IsEnabled = true;
-                button.IsSelected = false;
-                button.FontSize = DatesFontSize;
-                button.BorderWidth = BorderWidth;
-                button.BorderColor = BorderColor;
-                button.FontFamily = button.IsOutOfMonth ? DatesFontFamilyOutsideMonth : DatesFontFamily;
-                button.BackgroundColor = button.IsOutOfMonth ? DatesBackgroundColorOutsideMonth : DatesBackgroundColor;
-                button.TextColor = button.IsOutOfMonth ? DatesTextColorOutsideMonth : DatesTextColor;
-                button.FontAttributes = button.IsOutOfMonth ? DatesFontAttributesOutsideMonth : DatesFontAttributes;
-                button.IsEnabled = ShowNumOfMonths == 1 || !button.IsOutOfMonth;
-            });
+            button.IsEnabled = true;
+            button.IsSelected = false;
+            button.FontSize = DatesFontSize;
+            button.BorderWidth = BorderWidth;
+            button.BorderColor = BorderColor;
+            button.FontFamily = button.IsOutOfMonth ? DatesFontFamilyOutsideMonth : DatesFontFamily;
+            button.BackgroundColor = button.IsOutOfMonth ? DatesBackgroundColorOutsideMonth : DatesBackgroundColor;
+            button.TextColor = button.IsOutOfMonth ? DatesTextColorOutsideMonth : DatesTextColor;
+            button.FontAttributes = button.IsOutOfMonth ? DatesFontAttributesOutsideMonth : DatesFontAttributes;
+            button.IsEnabled = ShowNumOfMonths == 1 || !button.IsOutOfMonth;
         }
 
         protected void DateClickedEvent(object s, EventArgs a)
